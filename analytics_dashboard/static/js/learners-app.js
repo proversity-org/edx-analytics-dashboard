@@ -3,8 +3,9 @@ define([
     'marionette',
     'underscore',
     'models/learner-model',
-    'collections/learner-collection'
-], function ($, Marionette, _, LearnerModel, LearnerCollection) {
+    'collections/learner-collection',
+    'views/data-table-view'
+], function ($, Marionette, _, LearnerModel, LearnerCollection, DataTableView) {
     'use strict';
 
     var LearnersApp = Marionette.Application.extend({
@@ -60,6 +61,44 @@ define([
                 el: $(this.containerSelector)
             }).render();
             window.learnerCollection = this.learnerCollection;
+
+            this.djStuff(this.learnerCollection);
+        },
+
+        djStuff: function(learnerCollection) {
+            var page = this.page,
+                courseModel = page.models.courseModel,
+                learnerData,
+                tableColumns;
+
+            tableColumns = [
+                {key: 'name', title: gettext('Name')},
+                {key: 'username', title: gettext('Username')},
+                {key: 'problems_attempted', title: gettext('Problems Attempted'), type: 'number', className: 'text-right'}
+            ];
+
+            learnerData = _(learnerCollection.models).map(function(learner) {
+                var data = {};
+                _(['name', 'username', 'problems_attempted']).forEach(function(field) {
+                    data[field] = learner.get(field);
+                    if (!data[field]) {
+                        data[field] = learner.get('engagements')[field];
+                    }
+
+                });
+                return data;
+            });
+
+            courseModel.set('learners', learnerData);
+
+            new DataTableView({
+                el: '[data-role=learners-table]',
+                model: courseModel,
+                modelAttribute: 'learners',
+                columns: tableColumns
+                //sorting: ['-count'],
+                //replaceZero: '-'
+            });
         }
     });
 
