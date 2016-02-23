@@ -3,7 +3,6 @@ import copy
 import datetime
 
 import analyticsclient.constants.activity_type as AT
-from django.conf import settings
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.test import (override_settings, TestCase)
@@ -33,7 +32,7 @@ class BasePresenterTests(TestCase):
 
     def test_init(self):
         presenter = BasePresenter('edX/DemoX/Demo_Course')
-        self.assertEqual(presenter.client.timeout, settings.ANALYTICS_API_DEFAULT_TIMEOUT)
+        self.assertEqual(presenter.client.timeout, 10)
 
         presenter = BasePresenter('edX/DemoX/Demo_Course', timeout=15)
         self.assertEqual(presenter.client.timeout, 15)
@@ -158,7 +157,7 @@ class CourseEngagementVideoPresenterTests(SwitchMixin, TestCase):
     def setUp(self):
         super(CourseEngagementVideoPresenterTests, self).setUp()
         self.course_id = 'this/course/id'
-        self.presenter = CourseEngagementVideoPresenter(settings.COURSE_API_KEY, self.course_id)
+        self.presenter = CourseEngagementVideoPresenter(None, self.course_id)
 
     def test_default_block_data(self):
         self.assertDictEqual(self.presenter.default_block_data, {
@@ -729,7 +728,7 @@ class CoursePerformancePresenterTests(TestCase):
         cache.clear()
         self.course_id = PERFORMER_PRESENTER_COURSE_ID
         self.problem_id = 'i4x://edX/DemoX.1/problem/05d289c5ad3d47d48a77622c4a81ec36'
-        self.presenter = CoursePerformancePresenter(settings.COURSE_API_KEY, self.course_id)
+        self.presenter = CoursePerformancePresenter(None, self.course_id)
         self.factory = CoursePerformanceDataFactory()
 
     # First and last response counts were added, insights can handle both types of API responses at the moment.
