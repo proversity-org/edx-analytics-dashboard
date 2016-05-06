@@ -18,7 +18,7 @@ from django.views.generic import TemplateView
 from edx_rest_api_client.exceptions import (HttpClientError, SlumberBaseException)
 from opaque_keys.edx.keys import CourseKey
 import requests
-from waffle import switch_is_active
+from waffle import flag_is_active, switch_is_active
 
 from analyticsclient.client import Client
 from analyticsclient.exceptions import (ClientError, NotFoundError)
@@ -299,18 +299,20 @@ class CourseNavBarMixin(object):
                 'icon': 'fa-check-square-o',
                 'switch': 'enable_course_api',
             },
-            {
+        ]
+
+        # Remove disabled items
+        items = filter(is_feature_enabled, items)
+
+        # TODO: testing out activating per user
+        if flag_is_active(self.request, 'la_beta_user'):
+            items.append({
                 'name': 'learners',
                 'label': _('Learners'),
                 'view': 'courses:learners:learners',
                 'icon': 'fa-users',
                 'switch': 'enable_learner_analytics'
-            }
-
-        ]
-
-        # Remove disabled items
-        items = filter(is_feature_enabled, items)
+            })
 
         # Clean each item
         map(self.clean_item, items)
@@ -524,37 +526,40 @@ class CourseHome(CourseTemplateWithNavView):
             })
 
         if switch_is_active('enable_learner_analytics'):
-            items.append({
-                'name': _('Learners'),
-                'icon': 'fa-users',
-                'heading': _('What are individual learners doing?'),
-                'items': [
-                    {
-                        'title': _("Who is engaged? Who isn't?"),
-                        'view': 'courses:learners:learners',
-                        'breadcrumbs': [_('All Learners')]
-                    },
-                    # TODO: this is commented out until we complete the deep linking work, AN-6671
-                    # {
-                    #     'title': _('Who has been active recently?'),
-                    #     'view': 'courses:learners:learners',  # TODO: map this to the actual action in AN-6205
-                    #     # TODO: what would the breadcrumbs be?
-                    #     'breadcrumbs': [_('Learners')]
-                    # },
-                    # {
-                    #     'title': _('Who is most engaged in the discussions?'),
-                    #     'view': 'courses:learners:learners',  # TODO: map this to the actual action in AN-6205
-                    #     # TODO: what would the breadcrumbs be?
-                    #     'breadcrumbs': [_('Learners')]
-                    # },
-                    # {
-                    #     'title': _("Who hasn't watched videos recently?"),
-                    #     'view': 'courses:learners:learners',  # TODO: map this to the actual action in AN-6205
-                    #     # TODO: what would the breadcrumbs be?
-                    #     'breadcrumbs': [_('Learners')]
-                    # }
-                ]
-            })
+
+            # TODO: testing out activating per user
+            if flag_is_active(self.request, 'la_beta_user'):
+                items.append({
+                    'name': _('Learners'),
+                    'icon': 'fa-users',
+                    'heading': _('What are individual learners doing?'),
+                    'items': [
+                        {
+                            'title': _("Who is engaged? Who isn't?"),
+                            'view': 'courses:learners:learners',
+                            'breadcrumbs': [_('All Learners')]
+                        },
+                        # TODO: this is commented out until we complete the deep linking work, AN-6671
+                        # {
+                        #     'title': _('Who has been active recently?'),
+                        #     'view': 'courses:learners:learners',  # TODO: map this to the actual action in AN-6205
+                        #     # TODO: what would the breadcrumbs be?
+                        #     'breadcrumbs': [_('Learners')]
+                        # },
+                        # {
+                        #     'title': _('Who is most engaged in the discussions?'),
+                        #     'view': 'courses:learners:learners',  # TODO: map this to the actual action in AN-6205
+                        #     # TODO: what would the breadcrumbs be?
+                        #     'breadcrumbs': [_('Learners')]
+                        # },
+                        # {
+                        #     'title': _("Who hasn't watched videos recently?"),
+                        #     'view': 'courses:learners:learners',  # TODO: map this to the actual action in AN-6205
+                        #     # TODO: what would the breadcrumbs be?
+                        #     'breadcrumbs': [_('Learners')]
+                        # }
+                    ]
+                })
 
         return items
 
