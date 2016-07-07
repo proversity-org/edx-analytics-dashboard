@@ -8,7 +8,7 @@ from waffle import switch_is_active
 
 from analyticsclient.exceptions import NotFoundError
 
-from courses.presenters.engagement import (CourseEngagementActivityPresenter, CourseEngagementVideoPresenter)
+from courses.presenters.engagement import (CourseEngagementActivityPresenter, CourseEngagementVideoPresenter, CourseEngagementAcceptancePresenters)
 from courses.views import (CourseStructureMixin, CourseStructureExceptionMixin, CourseTemplateWithNavView)
 
 
@@ -24,6 +24,7 @@ class EngagementTemplateView(CourseTemplateWithNavView):
         {'name': 'content', 'label': _('Content'), 'view': 'courses:engagement:content'},
         {'name': 'videos', 'label': _('Videos'), 'view': 'courses:engagement:videos',
          'switch': 'enable_engagement_videos_pages'},
+        {'name': 'content', 'label': _('Acceptance'), 'view': 'courses:engagement:acceptance'},
     ]
     active_primary_nav_item = 'engagement'
     presenter = None
@@ -172,4 +173,72 @@ class EngagementVideoTimeline(EngagementVideoContentTemplateView):
         else:
             raise Http404
 
+        return context
+
+
+
+class EngagementCourseAcceptanceTemplateView(CourseStructureMixin, CourseStructureExceptionMixin, EngagementTemplateView):
+    page_title = _('Engagement Acceptance')
+    active_secondary_nav_item = 'acceptance'
+    section_id = None
+    subsection_id = None
+    # Translators: Do not translate UTC.
+    update_message = _('Acceptance data was last updated %(update_date)s at %(update_time)s UTC.')
+    no_data_message = _('Looks like no one has accessed these sections.')
+
+    def get_context_data(self, **kwargs):
+        self.presenter = CourseEngagementAcceptancePresenter(self.access_token, self.course_id)
+        context = super(EngagementCourseAcceptanceTemplateView, self).get_context_data(**kwargs)
+        context.update({
+            'sections': self.presenter.sections(),
+            'update_message': self.get_last_updated_message(self.presenter.last_updated),
+            'no_data_message': self.no_data_message
+        })
+
+        return context
+
+
+class EngagementCourseAcceptance(EngagementCourseAcceptanceTemplateView):
+    template_name = 'courses/engagement_acceptance_course.html'
+    page_name = 'engagement_acceptance'
+
+    def get_context_data(self, **kwargs):
+        context = super(EngagementCourseAcceptance, self).get_context_data(**kwargs)
+        self.set_primary_content(context, self.presenter.sections())
+        context['js_data']['course']['contentTableHeading'] = _('Section Name')
+        context.update({
+            'page_data': self.get_page_data(context)
+        })
+        return context
+
+
+class EngagementAcceptanceSection(EngagementCourseAcceptanceTemplateView):
+    template_name = 'courses/engagement_acceptance_by_section.html'
+    page_name = 'engagement_acceptance'
+
+    def get_context_data(self, **kwargs):
+        context = super(EngagementAcceptanceSection, self).get_context_data(**kwargs)
+        sub_sections = self.presenter.subsections(self.section_id)
+        self.set_primary_content(context, sub_sections)
+        context['js_data']['course']['contentTableHeading'] = _('Subsection Name')
+        context.update({
+            'page_data': self.get_page_data(context)
+        })
+        return context
+
+
+class EngagementAcceptanceSubsection(EngagementCourseAcceptanceTemplateView):
+    template_name = 'courses/engagement_acceptance_by_subsection.html'
+    page_name = 'engagement_acceptance'
+
+    def get_context_data(self, **kwargs):
+        context = super(EngagementAcceptanceSubsection, self).get_context_data(**kwargs)
+        videos = self.presenter.subsection_children(self.section_id, self.subsection_id)
+        self.set_primary_content(context, videos)
+        context['js_data']['course'].update({
+            'contentTableHeading': _('Unit Name'),
+        })
+        context.update({
+            'page_data': self.get_page_data(context)
+        })
         return context

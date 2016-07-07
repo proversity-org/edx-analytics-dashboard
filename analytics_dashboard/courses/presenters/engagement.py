@@ -322,3 +322,21 @@ class CourseEngagementVideoPresenter(CourseAPIPresenterMixin, BasePresenter):
             api_response.append(last_segment)
 
         return api_response
+
+
+class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter):
+
+    def build_section_url(self, section):
+        return reverse('courses:engagement:acceptance_section', kwargs={'course_id': self.course_id, 'section_id': section['id']})
+
+    def build_subsection_url_func(self, section_id):
+        """
+        Returns a function for creating the subsection URL.
+        """
+        # Using closures to keep the section ID available
+        def subsection_url(subsection):
+            return reverse('courses:engagement:acceptance_subsection',
+                           kwargs={'course_id': self.course_id,
+                                   'section_id': section_id,
+                                   'subsection_id': subsection['id']})
+        return subsection_url

@@ -49,6 +49,13 @@ ENGAGEMENT_URLS = patterns(
     url(r'^videos/sections/{}/$'.format(SECTION_ID_PATTERN),
         engagement.EngagementVideoSection.as_view(),
         name='video_section'),
+    url(r'^acceptance/$', engagement.EngagementCourseAcceptance.as_view(), name='acceptance'),
+    url(r'^acceptance/sections/{}/subsections/{}/$'.format(SECTION_ID_PATTERN, SUBSECTION_ID_PATTERN),
+        engagement.EngagementAcceptanceSubsection.as_view(),
+        name='acceptance_subsection'),
+    url(r'^acceptance/sections/{}/$'.format(SECTION_ID_PATTERN),
+        engagement.EngagementAcceptanceSection.as_view(),
+        name='acceptance_section'),
 )
 
 PERFORMANCE_URLS = patterns(
