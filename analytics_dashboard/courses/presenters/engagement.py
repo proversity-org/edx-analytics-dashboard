@@ -375,7 +375,7 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         self.attach_computed_data(parent)
 
         # including the URL enables navigation to child pages
-        if url_func > 0 and has_views:
+        if url_func > 0 and num_views:
             parent['url'] = url_func(parent)
 
     def attach_computed_data(self, view):
