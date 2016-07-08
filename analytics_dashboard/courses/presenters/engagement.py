@@ -379,9 +379,9 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
             parent['url'] = url_func(parent)
 
     def attach_computed_data(self, view):
-        total = max([video['num_unique_views'], video['num_views']])
+        total = max([view['num_unique_views'], view['num_views']])
         view.update({
-            'unique_percent': utils.math.calculate_percent(video['num_unique_views'], total),
+            'unique_percent': utils.math.calculate_percent(view['num_unique_views'], total),
         })
 
     def blocks_have_data(self, views):
