@@ -8,7 +8,7 @@ from waffle import switch_is_active
 
 from analyticsclient.exceptions import NotFoundError
 
-from courses.presenters.engagement import (CourseEngagementActivityPresenter, CourseEngagementVideoPresenter, CourseEngagementAcceptancePresenters)
+from courses.presenters.engagement import (CourseEngagementActivityPresenter, CourseEngagementVideoPresenter, CourseEngagementAcceptancePresenter)
 from courses.views import (CourseStructureMixin, CourseStructureExceptionMixin, CourseTemplateWithNavView)
 
 
