@@ -363,8 +363,8 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
 
     def attach_aggregated_data_to_parent(self, index, parent, url_func=None):
         children = parent['children']
-        num_unique_views = sum(child.get('users_at_start', 0) for child in children)
-        num_views = sum(child.get('users_at_end', 0) for child in children)
+        num_unique_views = sum(child.get('num_unique_views', 0) for child in children)
+        num_views = sum(child.get('num_views', 0) for child in children)
         parent.update({
             'num_unique_views': num_unique_views,
             'num_views': num_views,

@@ -24,7 +24,7 @@ class EngagementTemplateView(CourseTemplateWithNavView):
         {'name': 'content', 'label': _('Content'), 'view': 'courses:engagement:content'},
         {'name': 'videos', 'label': _('Videos'), 'view': 'courses:engagement:videos',
          'switch': 'enable_engagement_videos_pages'},
-        {'name': 'content', 'label': _('Acceptance'), 'view': 'courses:engagement:acceptance'},
+        {'name': 'acceptance', 'label': _('Acceptance'), 'view': 'courses:engagement:acceptance'},
     ]
     active_primary_nav_item = 'engagement'
     presenter = None
