@@ -379,6 +379,8 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
             parent['url'] = url_func(parent)
 
     def attach_computed_data(self, view):
+        if 'id' not in view:
+            view['id'] = view['course_id']+'/'+view['section']+'/'+view['subsection']
         total = max([view['num_unique_views'], view['num_views']])
         view.update({
             'unique_percent': utils.math.calculate_percent(view['num_unique_views'], total),
