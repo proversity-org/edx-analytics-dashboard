@@ -12,7 +12,7 @@ from analyticsclient.exceptions import NotFoundError
 
 from core.templatetags.dashboard_extras import metric_percentage
 from courses import utils
-from courses.exceptions import NoVideosError
+from courses.exceptions import (NoVideosError, NoViewsError)
 from courses.presenters import (BasePresenter, CourseAPIPresenterMixin)
 
 
@@ -361,6 +361,13 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
             'unique_percent': 0
         }
 
+    def module_id_to_data_id(self, module):
+        """
+        The data api only has the encoded module ID.  This converts the course structure ID
+        to the encoded form.
+        """
+        return utils.get_encoded_module_id(module['id'])
+
     def attach_aggregated_data_to_parent(self, index, parent, url_func=None):
         children = parent['children']
         num_unique_views = sum(child.get('num_unique_views', 0) for child in children)
@@ -382,7 +389,7 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         if 'id' not in view:
             view['id'] = view['section']+'/'+view['subsection']
         total = max([view['num_unique_views'], view['num_views']])
-        repeat_views = view['num_views'] - view['num_unique_views'];
+        repeat_views = view['num_views']-view['num_unique_views'];
         view.update({
             'unique_percent': utils.math.calculate_percent(view['num_unique_views'], total),
             'repeat_views': repeat_views
@@ -396,7 +403,7 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         return False
 
     def fetch_course_module_data(self):
-        # Get the videos from the API.  Use course_module_data() for cached data.
+        # Get the acceptance data from the API.  Use course_module_data() for cached data.
         try:
             views = self.client.courses(self.course_id).acceptance()
         except NotFoundError:
