@@ -368,6 +368,29 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         """
         return utils.get_encoded_module_id(module['id'])
 
+    def add_child_data_to_parent_blocks(self, parent_blocks, url_func=None):
+        """ Attaches data from the analytics data API to the course structure modules. """
+        key = self.get_cache_key(self.module_type)
+        module_data = cache.set(key, None)
+
+        try:
+            module_data = self._course_module_data()
+        except BaseCourseError as e:
+            logger.warning(e)
+            module_data = {}
+
+        for parent_block in parent_blocks:
+            parent_block['num_modules'] = len(parent_block['children'])
+            for index, child in enumerate(parent_block['children']):
+                data = module_data.get(self.module_id_to_data_id(child), self.default_block_data)
+
+                # map empty names to None so that the UI catches them and displays as '(empty)'
+                if len(child['name']) < 1:
+                    child['name'] = None
+                data['index'] = index + 1
+                self.post_process_adding_data_to_blocks(data, parent_block, child, url_func)
+                child.update(data)
+
     def attach_aggregated_data_to_parent(self, index, parent, url_func=None):
         children = parent['children']
         num_unique_views = sum(child.get('num_unique_views', 0) for child in children)
