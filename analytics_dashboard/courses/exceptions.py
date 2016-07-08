@@ -63,3 +63,12 @@ class NoVideosError(BaseCourseError):
     @property
     def message_template(self):
         return 'No videos have been viewed for course {}.'
+
+
+class NoViewsError(BaseCourseError):
+    """
+    Raise if the course has no views.
+    """
+    @property
+    def message_template(self):
+        return 'No views for course {}.'

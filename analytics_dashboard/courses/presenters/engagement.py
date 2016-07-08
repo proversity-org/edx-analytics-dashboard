@@ -340,3 +340,61 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
                                    'section_id': section_id,
                                    'subsection_id': subsection['id']})
         return subsection_url
+
+    @property
+    def module_type(self):
+        return 'acceptance'
+
+    @property
+    def all_sections_key(self):
+        return u'acceptance_sections'
+
+    @property
+    def section_type_template(self):
+        return u'acceptance_sections_{}_{}'
+
+    @property
+    def default_block_data(self):
+        return {
+            'num_unique_views': 0,
+            'num_views': 0,
+            'unique_percent': 0
+        }
+
+    def attach_aggregated_data_to_parent(self, index, parent, url_func=None):
+        children = parent['children']
+        num_unique_views = sum(child.get('users_at_start', 0) for child in children)
+        num_views = sum(child.get('users_at_end', 0) for child in children)
+        parent.update({
+            'num_unique_views': num_unique_views,
+            'num_views': num_views,
+            'index': index + 1,
+        })
+
+        # calculates the percentages too
+        self.attach_computed_data(parent)
+
+        # including the URL enables navigation to child pages
+        if url_func > 0 and has_views:
+            parent['url'] = url_func(parent)
+
+    def attach_computed_data(self, view):
+        total = max([video['num_unique_views'], video['num_views']])
+        view.update({
+            'unique_percent': utils.math.calculate_percent(video['num_unique_views'], total),
+        })
+
+    def blocks_have_data(self, views):
+        if views:
+            for view in views:
+                if view['num_views'] > 0:
+                    return True
+        return False
+
+    def fetch_course_module_data(self):
+        # Get the videos from the API.  Use course_module_data() for cached data.
+        try:
+            views = self.client.courses(self.course_id).acceptance()
+        except NotFoundError:
+            raise NoViewsError(course_id=self.course_id)
+        return views
