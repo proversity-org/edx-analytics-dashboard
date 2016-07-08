@@ -382,8 +382,10 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         if 'id' not in view:
             view['id'] = view['section']+'/'+view['subsection']
         total = max([view['num_unique_views'], view['num_views']])
+        repeat_views = view['num_views'] - view['num_unique_views'];
         view.update({
             'unique_percent': utils.math.calculate_percent(view['num_unique_views'], total),
+            'repeat_views': repeat_views
         })
 
     def blocks_have_data(self, views):
