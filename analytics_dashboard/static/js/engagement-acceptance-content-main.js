@@ -19,6 +19,7 @@ require(['vendor/domReady!', 'load/init-page'], function (doc, page) {
                     },
                     {
                         key: 'repeat_views',
+                        percent_key: 'repeat_percent',
                         title: gettext('Repeat Views'),
                         className: 'text-right',
                         type: 'number',

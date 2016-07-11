@@ -11,6 +11,8 @@ from analyticsclient.client import Client
 import analyticsclient.constants.activity_type as AT
 from analyticsclient.exceptions import NotFoundError
 
+from common.course_structure import CourseStructure
+
 from core.templatetags.dashboard_extras import metric_percentage
 
 from courses.exceptions import (BaseCourseError, NoVideosError, NoViewsError)
@@ -347,7 +349,7 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
 
     @property
     def module_type(self):
-        return 'acceptance'
+        return 'sequential'
 
     @property
     def all_sections_key(self):
@@ -362,7 +364,8 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         return {
             'num_unique_views': 0,
             'num_views': 0,
-            'unique_percent': 0
+            'unique_percent': 0,
+            'repeat_percent': 0
         }
 
     def module_id_to_data_id(self, module):
@@ -517,6 +520,7 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         repeat_views = view['num_views']-view['num_unique_views'];
         view.update({
             'unique_percent': utils.math.calculate_percent(view['num_unique_views'], total),
+            'repeat_percent': utils.math.calculate_percent(repeat_views, total),
             'repeat_views': repeat_views
         })
 
