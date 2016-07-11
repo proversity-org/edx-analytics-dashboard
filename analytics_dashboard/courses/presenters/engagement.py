@@ -12,10 +12,10 @@ import analyticsclient.constants.activity_type as AT
 from analyticsclient.exceptions import NotFoundError
 
 from core.templatetags.dashboard_extras import metric_percentage
-from courses import utils
-from courses.exceptions import (NoVideosError, NoViewsError)
-from courses.presenters import (BasePresenter, CourseAPIPresenterMixin)
 
+from courses.exceptions import (BaseCourseError, NoVideosError, NoViewsError)
+from courses.presenters import (BasePresenter, CourseAPIPresenterMixin)
+from courses import utils
 
 logger = logging.getLogger(__name__)
 
@@ -327,6 +327,9 @@ class CourseEngagementVideoPresenter(CourseAPIPresenterMixin, BasePresenter):
 
 class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter):
 
+    def sections(self):
+        return self.course_structure()
+
     def build_section_url(self, section):
         return reverse('courses:engagement:acceptance_section', kwargs={'course_id': self.course_id, 'section_id': section['id']})
 
@@ -369,11 +372,101 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         """
         return utils.get_encoded_module_id(module['id'])
 
+
+    def _get_structure(self):
+        """ Retrieves course structure from the course API. """
+        key = self.get_cache_key('structure')
+        structure = None #cache.get(key)
+
+        if not structure:
+            logger.debug('Retrieving structure for course: %s', self.course_id)
+            structure = self.course_api_client.course_structures(self.course_id).get()
+            cache.set(key, structure)
+
+        return structure
+
+
+    def course_structure(self, section_id=None, subsection_id=None):
+        """
+        Returns course structure from cache.  If structure isn't found, it is fetched from the
+        course structure API.  If no arguments are provided, all sections and children are returned.
+        If only section_id is provided, that section is returned.  If both section_id and
+        subsection_id is provided, the structure for the subsection is returned.
+        """
+        if section_id is None and subsection_id is not None:
+            raise ValueError('section_id must be specified if subsection_id is specified.')
+
+        structure_type_key = self.get_cache_key(self.section_type_template.format(section_id, subsection_id))
+        found_structure = None #cache.get(structure_type_key)
+
+        if not found_structure:
+            all_sections_key = self.get_cache_key(self.all_sections_key)
+            found_structure = None #cache.get(all_sections_key)
+
+            if not found_structure:
+                structure = self._get_structure()
+                found_structure = CourseStructure.course_structure_to_sections(structure, self.module_type,
+                                                                               graded=self.module_graded_type)
+                cache.set(all_sections_key, found_structure)
+
+            for section in found_structure:
+                self.add_child_data_to_parent_blocks(section['children'],
+                                                     self.build_module_url_func(section['id']))
+                self.attach_data_to_parents(section['children'],
+                                            self.build_subsection_url_func(section['id']))
+                section['num_modules'] = sum(child.get('num_modules', 0) for child in section['children'])
+
+            self.attach_data_to_parents(found_structure, self.build_section_url)
+
+            if found_structure:
+                if section_id:
+                    found_structure = [section for section in found_structure if section['id'] == section_id]
+
+                    if found_structure and subsection_id:
+                        found_structure = \
+                            [section for section in found_structure[0]['children'] if section['id'] == subsection_id]
+
+            cache.set(structure_type_key, found_structure)
+
+        return found_structure
+
+
+    def _course_module_data(self):
+        """ Retrieves course problems (from cache or course API) and calls process_module_data to attach data. """
+
+        key = self.get_cache_key(self.module_type)
+        module_data = None #cache.get(key)
+
+        if not module_data:
+            module_data = self.fetch_course_module_data()
+
+            # Create a lookup table so that submission data can be quickly retrieved by downstream consumers.
+            table = {}
+            last_updated = datetime.datetime.min
+
+            for datum in module_data:
+                self.attach_computed_data(datum)
+                table[datum['id']] = datum
+
+                # Set the last_updated value
+                created = datum.pop('created', None)
+                if created:
+                    created = self.parse_api_datetime(created)
+                    last_updated = max(last_updated, created)
+
+            if last_updated is not datetime.datetime.min:
+                _key = self.get_cache_key('{}_last_updated'.format(self.module_type))
+                cache.set(_key, last_updated)
+                self._last_updated = last_updated
+
+            module_data = table
+            cache.set(key, module_data)
+
+        return module_data
+
+
     def add_child_data_to_parent_blocks(self, parent_blocks, url_func=None):
         """ Attaches data from the analytics data API to the course structure modules. """
-        key = self.get_cache_key(self.module_type)
-        module_data = cache.set(key, None)
-
         try:
             module_data = self._course_module_data()
         except BaseCourseError as e:
@@ -392,6 +485,13 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
                 self.post_process_adding_data_to_blocks(data, parent_block, child, url_func)
                 child.update(data)
 
+
+    def attach_data_to_parents(self, parents, url_func=None):
+        """ Convenience method for adding aggregated data from children."""
+        for index, parent in enumerate(parents):
+            self.attach_aggregated_data_to_parent(index, parent, url_func)
+
+
     def attach_aggregated_data_to_parent(self, index, parent, url_func=None):
         children = parent['children']
         num_unique_views = sum(child.get('num_unique_views', 0) for child in children)
@@ -409,9 +509,10 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
         if url_func > 0 and num_views:
             parent['url'] = url_func(parent)
 
+
     def attach_computed_data(self, view):
         if 'id' not in view:
-            view['id'] = view['section']+'/'+view['subsection']
+            view['id'] = view['subsection']
         total = max([view['num_unique_views'], view['num_views']])
         repeat_views = view['num_views']-view['num_unique_views'];
         view.update({
@@ -419,12 +520,14 @@ class CourseEngagementAcceptancePresenter(CourseAPIPresenterMixin, BasePresenter
             'repeat_views': repeat_views
         })
 
+
     def blocks_have_data(self, views):
         if views:
             for view in views:
                 if view['num_views'] > 0:
                     return True
         return False
+
 
     def fetch_course_module_data(self):
         # Get the acceptance data from the API.  Use course_module_data() for cached data.
