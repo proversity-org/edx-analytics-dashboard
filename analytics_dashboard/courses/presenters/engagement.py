@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 from waffle import switch_is_active
