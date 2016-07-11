@@ -11,7 +11,7 @@ require(['vendor/domReady!', 'load/init-page'], function (doc, page) {
                     {
                         key: 'num_unique_views',
                         percent_key: 'unique_percent',
-                        title: gettext('Unique Views'),
+                        title: gettext('Unique'),
                         className: 'text-right',
                         type: 'number',
                         fractionDigits: 1,
@@ -20,7 +20,7 @@ require(['vendor/domReady!', 'load/init-page'], function (doc, page) {
                     {
                         key: 'repeat_views',
                         percent_key: 'repeat_percent',
-                        title: gettext('Repeat Views'),
+                        title: gettext('Repeat'),
                         className: 'text-right',
                         type: 'number',
                         fractionDigits: 1,
@@ -30,7 +30,7 @@ require(['vendor/domReady!', 'load/init-page'], function (doc, page) {
                 tableColumns = [
                     {key: 'index', title: gettext('Order'), type: 'number', className: 'text-right'},
                     {key: 'name', title: model.get('contentTableHeading'), type: 'hasNull'},
-                    {key: 'num_modules', title: gettext('Views'), type: 'number', className: 'text-right'}
+                    {key: 'num_views', title: gettext('Total Views'), type: 'number', className: 'text-right'}
                 ];
 
             tableColumns = tableColumns.concat(graphViewColumns);
