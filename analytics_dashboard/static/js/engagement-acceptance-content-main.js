@@ -36,7 +36,14 @@ require(['vendor/domReady!', 'load/init-page'], function (doc, page) {
             tableColumns = tableColumns.concat(graphViewColumns);
             tableColumns.push({
                 key: 'unique_percent',
-                title: gettext('Unique Percentage'),
+                title: gettext('Unique %'),
+                className: 'text-right',
+                type: 'percent'
+            });
+
+            tableColumns.push({
+                key: 'repeat_percent',
+                title: gettext('Repeat %'),
                 className: 'text-right',
                 type: 'percent'
             });
