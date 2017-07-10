@@ -2,10 +2,10 @@
   "name": "edx-analytics-dashboard",
   "repository": {
     "type": "git",
-    "url": "git://github.com/edx/edx-analytics-dashboard"
+    "url": "git://github.com/proversity-org/edx-analytics-dashboard"
   },
   "dependencies": {
-    "bower": "1.7.9",
+    "bower": "1.8.0",
     "cldr-data-downloader": "0.2.5",
     "requirejs": "^2.1.14"
   },

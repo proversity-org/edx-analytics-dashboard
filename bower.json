@@ -37,8 +37,7 @@
     "backgrid-filter": "^0.3.7",
     "text": "^2.0.14",
     "axe-core": "^1.1.1",
-    "nprogress": "^0.2.0",
-    "edx-pattern-library": "0.16.6"
+    "nprogress": "^0.2.0"
   },
   "resolutions": {
     "backbone": "~1.2.3",
