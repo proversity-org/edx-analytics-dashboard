@@ -34,3 +34,8 @@ DOCUMENTATION_LOAD_ERROR_MESSAGE = 'This data may not be available for your cour
 # Use Cloudfront CDN for assets
 if CDN_DOMAIN:
     STATIC_URL = 'https://' + CDN_DOMAIN + '/static/'
+
+FOOTER_LINKS = (
+    {'url': 'https://learn.proversity.org/tos', 'text': _('Terms of Service'), 'data_role': 'tos'},
+    {'url': 'https://learn.proversity.org/privacy', 'text': _('Privacy Policy'), 'data_role': 'privacy-policy'},
+)
